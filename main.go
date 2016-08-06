@@ -12,27 +12,20 @@ const (
     HEIGHT = 30
 )
 
-// Global maps:
-//
-// class string -> rune to display
-// class string -> function called at spawn time
-// class string -> function called at act time
-
-var RuneMap map[string]rune = make(map[string]rune)
-var SpawnMap map[string]func(*Entity) = make(map[string]func(*Entity))
-var ActionMap map[string]func() *Entity = make(map[string]func() *Entity)
-
 func main() {
 
     rand.Seed(time.Now().UTC().UnixNano())
 
     if len(RuneMap) != len(ActionMap) {
-        fmt.Printf("RuneMap and ActionMap had different lengths.\n")
+        print_map_lengths()
         return
     }
-
     if len(RuneMap) != len(SpawnMap) {
-        fmt.Printf("RuneMap and SpawnMap had different lengths.\n")
+        print_map_lengths()
+        return
+    }
+    if len(RuneMap) != len(StatsMap) {
+        print_map_lengths()
         return
     }
 

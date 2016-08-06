@@ -2,10 +2,11 @@ package main
 
 func init() {
     RuneMap["dirt"] = '.'
-    SpawnMap["dirt"] = SpawnDirt
+    SpawnMap["dirt"] = nil
     ActionMap["dirt"] = nil
-}
 
-func SpawnDirt(e *Entity) {
-    e.Mass = 10
+    StatsMap["dirt"] = Stats{
+        Mass: 10,
+        Dead: true,
+    }
 }

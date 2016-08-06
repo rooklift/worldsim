@@ -2,13 +2,32 @@ package main
 
 import (
     "fmt"
+    "encoding/json"
 )
 
 type Entity struct {
-    Class string
-    X int
-    Y int
-    Mass float64
+    Class string        `json:"class"`
+    X int               `json:"x"`
+    Y int               `json:"y"`
+    Stats
+}
+
+type Stats struct {
+    Mass float64        `json:"mass"`
+    Hunger int          `json:"hunger"`
+    Dead bool           `json:"dead"`
+}
+
+var RuneMap map[string]rune = make(map[string]rune) // rune to display
+var SpawnMap map[string]func(*Entity) error = make(map[string]func(*Entity) error) // function called at spawn time
+var ActionMap map[string]func(*Entity) error = make(map[string]func(*Entity) error) // function called at act time
+var StatsMap map[string]Stats = make(map[string]Stats) // default stats
+
+func print_map_lengths() {
+    fmt.Printf("len(RuneMap): %d\n", len(RuneMap))
+    fmt.Printf("len(SpawnMap): %d\n", len(SpawnMap))
+    fmt.Printf("len(ActionMap): %d\n", len(ActionMap))
+    fmt.Printf("len(StatsMap): %d\n", len(StatsMap))
 }
 
 func NewEntity(x, y int, class string) (*Entity, error) {
@@ -23,6 +42,12 @@ func NewEntity(x, y int, class string) (*Entity, error) {
     e.Class = class
     e.X = x
     e.Y = y
+
+    default_stats, ok := StatsMap[class]
+    if ok == false {
+        return nil, fmt.Errorf("NewEntity(): class '%s' is not in StatsMap\n", class)
+    }
+    e.Stats = default_stats
 
     spawn_function, ok := SpawnMap[class]
     if ok == false {
@@ -40,10 +65,9 @@ func (e *Entity) String() string {
     if e == nil {
         return "(nil entity)"
     }
-    if e.Class != "" {
-        return e.Class
-    }
-    return "(classless entity)"
+
+    j, _ := json.MarshalIndent(e, "", "  ")
+    return string(j)
 }
 
 func (e *Entity) Act() error {
@@ -60,7 +84,7 @@ func (e *Entity) Act() error {
         return nil
     }
 
-    err := fn()
+    err := fn(e)
     if err != nil {
         return fmt.Errorf("Act(): %v\n", err)
     }
