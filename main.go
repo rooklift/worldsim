@@ -27,8 +27,14 @@ func main() {
         fmt.Fprintf(os.Stderr, "%v\n", err)
     }
 
+    for n := 0; n < 100; n++ {
+        w.Iterate()
+    }
+
     fmt.Println(w)
-    fmt.Println(w.Tiles[2][2])
+    for _, critter := range w.Critters {
+        fmt.Println(critter)
+    }
 }
 
 func world_gen() (*World, error) {
@@ -43,6 +49,11 @@ func world_gen() (*World, error) {
     }
 
     err = sprinkle_world(w, "grass", 0.2)
+    if err != nil {
+        return w, fmt.Errorf("world_gen(): %v", err)
+    }
+
+    err = add_critters(w)
     if err != nil {
         return w, fmt.Errorf("world_gen(): %v", err)
     }
@@ -76,7 +87,7 @@ func sprinkle_world(w *World, class string, chance float64) error {
         for y := 0; y < w.Height; y++ {
             if rand.Float64() < chance {
 
-                new_entity, err := NewEntity(x, y, class)
+                new_entity, err := NewEntity(x, y, class, w)
                 if err != nil {
                     return fmt.Errorf("sprinkle_world(): %v", err)
                 }
@@ -86,5 +97,15 @@ func sprinkle_world(w *World, class string, chance float64) error {
         }
     }
 
+    return nil
+}
+
+func add_critters(w *World) error {
+    new_ent, err := NewEntity(5, 5, "rat", w)
+    if err != nil {
+        return fmt.Errorf("add_critters(): %v", err)
+    }
+
+    w.Critters = append(w.Critters, new_ent)
     return nil
 }

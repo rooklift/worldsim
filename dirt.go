@@ -4,8 +4,9 @@ func init() {
     ActionMap["dirt"] = nil
 
     DefaultMap["dirt"] = Entity{
-        Rune: '.',
+        Rune: ' ',
         Mass: 10,
         Dead: true,
+        Passable: true,
     }
 }

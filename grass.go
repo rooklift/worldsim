@@ -6,5 +6,6 @@ func init() {
     DefaultMap["grass"] = Entity{
         Rune: ',',
         Mass: 0.2,
+        Passable: true,
     }
 }

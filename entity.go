@@ -7,18 +7,20 @@ import (
 
 type Entity struct {
     Class string        `json:"class"`
+    World *World        `json:"-"`          // ignored in json
     X int               `json:"x"`
     Y int               `json:"y"`
     Rune rune           `json:"rune"`
     Mass float64        `json:"mass"`
     Hunger int          `json:"hunger"`
     Dead bool           `json:"dead"`
+    Passable bool       `json:"passable"`
 }
 
-var ActionMap map[string]func(e *Entity, spawn bool) error = make(map[string]func(*Entity, bool) error) // function called at act time or spawn time
+var ActionMap map[string]func(e *Entity, spawn bool) = make(map[string]func(*Entity, bool)) // function called at act time or spawn time
 var DefaultMap map[string]Entity = make(map[string]Entity) // default stats
 
-func NewEntity(x, y int, class string) (*Entity, error) {
+func NewEntity(x, y int, class string, world *World) (*Entity, error) {
 
     e := new(Entity)
 
@@ -31,6 +33,7 @@ func NewEntity(x, y int, class string) (*Entity, error) {
     // Must do the following after defaults are set...
 
     e.Class = class
+    e.World = world
     e.X = x
     e.Y = y
 
@@ -71,10 +74,7 @@ func (e *Entity) Act() error {
         return nil
     }
 
-    err := fn(e, false)
-    if err != nil {
-        return fmt.Errorf("Act(): %v\n", err)
-    }
+    fn(e, false)
 
     return nil
 }
