@@ -1,11 +1,10 @@
 package main
 
 func init() {
-    RuneMap["dirt"] = '.'
-    SpawnMap["dirt"] = nil
     ActionMap["dirt"] = nil
 
-    StatsMap["dirt"] = Stats{
+    DefaultMap["dirt"] = Entity{
+        Rune: '.',
         Mass: 10,
         Dead: true,
     }

@@ -9,53 +9,40 @@ type Entity struct {
     Class string        `json:"class"`
     X int               `json:"x"`
     Y int               `json:"y"`
-    Stats
-}
-
-type Stats struct {
+    Rune rune           `json:"rune"`
     Mass float64        `json:"mass"`
     Hunger int          `json:"hunger"`
     Dead bool           `json:"dead"`
 }
 
-var RuneMap map[string]rune = make(map[string]rune) // rune to display
-var SpawnMap map[string]func(*Entity) error = make(map[string]func(*Entity) error) // function called at spawn time
-var ActionMap map[string]func(*Entity) error = make(map[string]func(*Entity) error) // function called at act time
-var StatsMap map[string]Stats = make(map[string]Stats) // default stats
-
-func print_map_lengths() {
-    fmt.Printf("len(RuneMap): %d\n", len(RuneMap))
-    fmt.Printf("len(SpawnMap): %d\n", len(SpawnMap))
-    fmt.Printf("len(ActionMap): %d\n", len(ActionMap))
-    fmt.Printf("len(StatsMap): %d\n", len(StatsMap))
-}
+var ActionMap map[string]func(e *Entity, spawn bool) error = make(map[string]func(*Entity, bool) error) // function called at act time or spawn time
+var DefaultMap map[string]Entity = make(map[string]Entity) // default stats
 
 func NewEntity(x, y int, class string) (*Entity, error) {
 
-    _, ok := RuneMap[class]
-    if ok == false {
-        return nil, fmt.Errorf("NewEntity(): class '%s' is not in RuneMap\n", class)
-    }
-
     e := new(Entity)
+
+    default_stats, ok := DefaultMap[class]
+    if ok == false {
+        return nil, fmt.Errorf("NewEntity(): class '%s' is not in DefaultMap\n", class)
+    }
+    *e = default_stats
+
+    // Must do the following after defaults are set...
 
     e.Class = class
     e.X = x
     e.Y = y
 
-    default_stats, ok := StatsMap[class]
-    if ok == false {
-        return nil, fmt.Errorf("NewEntity(): class '%s' is not in StatsMap\n", class)
-    }
-    e.Stats = default_stats
+    // Now, call the entity's action function with spawn = true so it can do anything it needs to do at spawn time...
 
-    spawn_function, ok := SpawnMap[class]
+    act_function, ok := ActionMap[class]
     if ok == false {
-        return nil, fmt.Errorf("NewEntity(): class '%s' is not in SpawnMap\n", class)
+        return nil, fmt.Errorf("NewEntity(): class '%s' is not in ActionMap\n", class)
     }
 
-    if spawn_function != nil {
-        spawn_function(e)
+    if act_function != nil {
+        act_function(e, true)
     }
 
     return e, nil
@@ -63,7 +50,7 @@ func NewEntity(x, y int, class string) (*Entity, error) {
 
 func (e *Entity) String() string {
     if e == nil {
-        return "(nil entity)"
+        return "nil"
     }
 
     j, _ := json.MarshalIndent(e, "", "  ")
@@ -84,7 +71,7 @@ func (e *Entity) Act() error {
         return nil
     }
 
-    err := fn(e)
+    err := fn(e, false)
     if err != nil {
         return fmt.Errorf("Act(): %v\n", err)
     }
@@ -97,9 +84,10 @@ func (e *Entity) Glyph() (rune, error) {
         return ' ', fmt.Errorf("Glyph(): received nil pointer")
     }
 
-    r, ok := RuneMap[e.Class]
-    if ok == false {
-        return ' ', fmt.Errorf("Glyph(): class '%s' was not in RuneMap", e.Class)
+    r := e.Rune
+    if r == 0 {
+        return ' ', fmt.Errorf("Glyph(): entity had zero rune")
     }
+
     return r, nil
 }

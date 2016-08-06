@@ -1,11 +1,10 @@
 package main
 
 func init() {
-    RuneMap["grass"] = ','
-    SpawnMap["grass"] = nil
     ActionMap["grass"] = nil
 
-    StatsMap["grass"] = Stats{
+    DefaultMap["grass"] = Entity{
+        Rune: ',',
         Mass: 0.2,
     }
 }

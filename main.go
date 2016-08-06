@@ -16,16 +16,9 @@ func main() {
 
     rand.Seed(time.Now().UTC().UnixNano())
 
-    if len(RuneMap) != len(ActionMap) {
-        print_map_lengths()
-        return
-    }
-    if len(RuneMap) != len(SpawnMap) {
-        print_map_lengths()
-        return
-    }
-    if len(RuneMap) != len(StatsMap) {
-        print_map_lengths()
+    if len(DefaultMap) != len(ActionMap) {
+        fmt.Printf("len(DefaultMap): %d\n", len(DefaultMap))
+        fmt.Printf("len(ActionMap): %d\n", len(ActionMap))
         return
     }
 
@@ -35,6 +28,7 @@ func main() {
     }
 
     fmt.Println(w)
+    fmt.Println(w.Tiles[2][2])
 }
 
 func world_gen() (*World, error) {
