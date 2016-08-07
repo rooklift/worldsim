@@ -8,15 +8,45 @@ import (
 type World struct {
     Width int
     Height int
-    Tiles [][]*Entity
+    Blocks [][]*Block
+}
+
+type Block struct {
+    Tile *Entity
     Critters []*Entity
 }
 
 func (w *World) Iterate() {
-    for _, critter := range w.Critters {
-        err := critter.Act()
-        if err != nil {
-            fmt.Fprintf(os.Stderr, "While iterating: %v\n", err)
+
+    for x := 0; x < w.Width; x++ {
+        for y := 0; y < w.Height; y++ {
+            for _, critter := range w.Blocks[x][y].Critters {
+                critter.Acted = false
+            }
+        }
+    }
+
+    for x := 0; x < w.Width; x++ {
+        for y := 0; y < w.Height; y++ {
+            for _, critter := range w.Blocks[x][y].Critters {
+                if critter.Acted == false {
+
+                    if x != critter.X || y != critter.Y {
+                        fmt.Fprintf(os.Stderr, "In block (%d,%d), found %s with .X == %d, .Y == %d\n", x, y, critter.Class, critter.X, critter.Y)
+                    }
+
+                    err := critter.Act()
+                    if err != nil {
+                        fmt.Fprintf(os.Stderr, "While iterating: %v\n", err)
+                    }
+                    critter.Acted = true
+
+                    if critter.X != x || critter.Y != y {
+                        w.RemoveCritter(x, y, critter)
+                        w.PlaceCritter(critter)
+                    }
+                }
+            }
         }
     }
 }
@@ -28,7 +58,7 @@ func (w *World) GetTile(x, y int) *Entity {
     if x < 0 || x >= w.Width || y < 0 || y >= w.Height {
         return nil
     }
-    return w.Tiles[x][y]
+    return w.Blocks[x][y].Tile
 }
 
 func (w *World) SetTile(x, y int, e *Entity) error {
@@ -38,7 +68,40 @@ func (w *World) SetTile(x, y int, e *Entity) error {
     if x < 0 || x >= w.Width || y < 0 || y >= w.Height {
         return fmt.Errorf("SetTile() called with out of bounds x, y")
     }
-    w.Tiles[x][y] = e
+    w.Blocks[x][y].Tile = e
+    return nil
+}
+
+func (w *World) RemoveCritter(x, y int, e *Entity) error {
+
+    if x < 0 || x >= w.Width || y < 0 || y >= w.Height {
+        return fmt.Errorf("RemoveCritter() called with out of bounds x, y")
+    }
+
+    for i, c := range w.Blocks[x][y].Critters {
+        if c == e {
+            w.Blocks[x][y].Critters = append(w.Blocks[x][y].Critters[:i], w.Blocks[x][y].Critters[i + 1:]...)
+            return nil
+        }
+    }
+
+    return fmt.Errorf("RemoveCritter() couldn't find the critter in block (%d,%d)", x, y)
+}
+
+func (w *World) PlaceCritter(e *Entity) error {
+
+    // Assumes the entity has its .X and .Y already validly set.
+
+    x, y := e.X, e.Y
+
+    if x < 0 || x >= w.Width || y < 0 || y >= w.Height {
+        return fmt.Errorf("PlaceCritter() called with out of bounds x, y")
+    }
+
+    // FIXME: check not already present
+
+    w.Blocks[x][y].Critters = append(w.Blocks[x][y].Critters, e)
+
     return nil
 }
 
@@ -47,6 +110,8 @@ func (w *World) String() string {
     // First make a 2D slice of the runes to print
 
     var r [][]rune
+    var glyph rune
+    var err error
 
     for x := 0; x < w.Width; x++ {
 
@@ -54,29 +119,21 @@ func (w *World) String() string {
 
         for y := 0; y < w.Height; y++ {
 
-            glyph, err := w.Tiles[x][y].Glyph()
-            if err != nil {
-                fmt.Fprintf(os.Stderr, "While printing world (tile phase): %v\n", err)
+            if len(w.Blocks[x][y].Critters) > 0 {
+                glyph, err = w.Blocks[x][y].Critters[0].Glyph()
+                if err != nil {
+                    fmt.Fprintf(os.Stderr, "While printing world critter: %v\n", err)
+                }
+            } else {
+                glyph, err = w.Blocks[x][y].Tile.Glyph()
+                if err != nil {
+                    fmt.Fprintf(os.Stderr, "While printing world tile: %v\n", err)
+                }
             }
-
             column = append(column, glyph)
         }
 
         r = append(r, column)
-    }
-
-    // Now modify that slice with runes of the critters
-
-    for _, critter := range w.Critters {
-
-        glyph, err := critter.Glyph()
-
-        if err != nil {
-            fmt.Fprintf(os.Stderr, "While printing world (critter phase): %v\n", err)
-        }
-
-        r[critter.X][critter.Y] = glyph
-
     }
 
     // Now create a 1D slice that can be converted to a string

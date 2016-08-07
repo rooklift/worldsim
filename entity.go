@@ -10,6 +10,7 @@ type Entity struct {
     World *World        `json:"-"`          // ignored in json
     X int               `json:"x"`
     Y int               `json:"y"`
+    Acted bool          `json:"acted"`
     Rune rune           `json:"rune"`
     Mass float64        `json:"mass"`
     Hunger int          `json:"hunger"`

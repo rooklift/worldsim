@@ -32,9 +32,6 @@ func main() {
     }
 
     fmt.Println(w)
-    for _, critter := range w.Critters {
-        fmt.Println(critter)
-    }
 }
 
 func world_gen() (*World, error) {
@@ -48,7 +45,12 @@ func world_gen() (*World, error) {
         return w, fmt.Errorf("world_gen(): %v", err)
     }
 
-    err = sprinkle_world(w, "grass", 0.2)
+    err = sprinkle_world(w, "grass", 0.4)
+    if err != nil {
+        return w, fmt.Errorf("world_gen(): %v", err)
+    }
+
+    err = sprinkle_world(w, "tree", 0.05)
     if err != nil {
         return w, fmt.Errorf("world_gen(): %v", err)
     }
@@ -63,7 +65,7 @@ func world_gen() (*World, error) {
 
 func make_world(width, height int) *World {
 
-    // Returns a 2D slice of nil pointers
+    // Returns a 2D slice of empty blocks
 
     w := new(World)
 
@@ -71,11 +73,11 @@ func make_world(width, height int) *World {
     w.Height = height
 
     for x := 0; x < w.Width; x++ {
-        var column []*Entity
+        var column []*Block
         for y := 0; y < w.Height; y++ {
-            column = append(column, nil)
+            column = append(column, new(Block))
         }
-        w.Tiles = append(w.Tiles, column)
+        w.Blocks = append(w.Blocks, column)
     }
 
     return w
@@ -101,11 +103,16 @@ func sprinkle_world(w *World, class string, chance float64) error {
 }
 
 func add_critters(w *World) error {
+
     new_ent, err := NewEntity(5, 5, "rat", w)
     if err != nil {
         return fmt.Errorf("add_critters(): %v", err)
     }
 
-    w.Critters = append(w.Critters, new_ent)
+    err = w.PlaceCritter(new_ent)
+    if err != nil {
+        return fmt.Errorf("add_critters(): %v", err)
+    }
+
     return nil
 }
