@@ -18,6 +18,11 @@ type Block struct {
 
 func (w *World) Iterate() {
 
+    var err error
+
+    // Call each critter's action function. The critter's function is responsible for changing its X and Y coordinates.
+    // But we then adjust what block owns it in this function here.
+
     for x := 0; x < w.Width; x++ {
         for y := 0; y < w.Height; y++ {
             for _, critter := range w.Blocks[x][y].Critters {
@@ -32,18 +37,24 @@ func (w *World) Iterate() {
                 if critter.Acted == false {
 
                     if x != critter.X || y != critter.Y {
-                        fmt.Fprintf(os.Stderr, "In block (%d,%d), found %s with .X == %d, .Y == %d\n", x, y, critter.Class, critter.X, critter.Y)
+                        fmt.Fprintf(os.Stderr, "Iterate(): In block (%d,%d), found %s with .X == %d, .Y == %d\n", x, y, critter.Class, critter.X, critter.Y)
                     }
 
-                    err := critter.Act()
+                    err = critter.Act()
                     if err != nil {
-                        fmt.Fprintf(os.Stderr, "While iterating: %v\n", err)
+                        fmt.Fprintf(os.Stderr, "Iterate(): %v\n", err)
                     }
                     critter.Acted = true
 
                     if critter.X != x || critter.Y != y {
-                        w.RemoveCritter(x, y, critter)
-                        w.PlaceCritter(critter)
+                        err = w.RemoveCritter(x, y, critter)
+                        if err != nil {
+                            fmt.Fprintf(os.Stderr, "Iterate(): %v\n", err)
+                        }
+                        err = w.PlaceCritter(critter)
+                        if err != nil {
+                            fmt.Fprintf(os.Stderr, "Iterate(): %v\n", err)
+                        }
                     }
                 }
             }
@@ -55,7 +66,7 @@ func (w *World) GetTile(x, y int) *Entity {
 
     // Assumes uniform length of columns and rows, i.e. no raggedy 2D arrays
 
-    if x < 0 || x >= w.Width || y < 0 || y >= w.Height {
+    if w.InBounds(x, y) == false {
         return nil
     }
     return w.Blocks[x][y].Tile
@@ -65,8 +76,8 @@ func (w *World) SetTile(x, y int, e *Entity) error {
 
     // Assumes uniform length of columns and rows, i.e. no raggedy 2D arrays
 
-    if x < 0 || x >= w.Width || y < 0 || y >= w.Height {
-        return fmt.Errorf("SetTile() called with out of bounds x, y")
+    if w.InBounds(x, y) == false {
+        return fmt.Errorf("SetTile() called with out of bounds x, y == (%d,%d)", x, y)
     }
     w.Blocks[x][y].Tile = e
     return nil
@@ -74,8 +85,8 @@ func (w *World) SetTile(x, y int, e *Entity) error {
 
 func (w *World) RemoveCritter(x, y int, e *Entity) error {
 
-    if x < 0 || x >= w.Width || y < 0 || y >= w.Height {
-        return fmt.Errorf("RemoveCritter() called with out of bounds x, y")
+    if w.InBounds(x, y) == false {
+        return fmt.Errorf("RemoveCritter() called with out of bounds x, y == (%d,%d)", x, y)
     }
 
     for i, c := range w.Blocks[x][y].Critters {
@@ -94,8 +105,8 @@ func (w *World) PlaceCritter(e *Entity) error {
 
     x, y := e.X, e.Y
 
-    if x < 0 || x >= w.Width || y < 0 || y >= w.Height {
-        return fmt.Errorf("PlaceCritter() called with out of bounds x, y")
+    if w.InBounds(x, y) == false {
+        return fmt.Errorf("PlaceCritter() called with out of bounds x, y == (%d,%d)", x, y)
     }
 
     // FIXME: check not already present
