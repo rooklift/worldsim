@@ -168,3 +168,30 @@ func (w *World) InBounds(x, y int) bool {
     }
     return false
 }
+
+func (w *World) TryMove(e *Entity, desired_x int, desired_y int) bool {
+
+    // Adjust the entity's .X and .Y if to the requested values if possible. Do nothing else.
+    // In particular, note that this function should not fix block ownership of the entity.
+
+    if w.InBounds(desired_x, desired_y) == false {
+        return false
+    }
+
+    block := e.World.Blocks[desired_x][desired_y]
+
+    if block.Tile.Passable == false {
+        return false
+    }
+
+    for _, other_critter := range block.Critters {
+        if other_critter.Passable == false {
+            return false
+        }
+    }
+
+    e.X = desired_x
+    e.Y = desired_y
+
+    return true
+}
