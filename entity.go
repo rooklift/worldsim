@@ -18,7 +18,7 @@ type Entity struct {
     Passable bool       `json:"passable"`
 }
 
-var ActionMap map[string]func(e *Entity, spawn bool) = make(map[string]func(*Entity, bool)) // function called at act time or spawn time
+var ActionMap map[string]func(e *Entity) = make(map[string]func(*Entity)) // function called at act time or spawn time
 var DefaultMap map[string]Entity = make(map[string]Entity) // default stats
 
 func NewEntity(x, y int, class string, world *World) (*Entity, error) {
@@ -37,17 +37,6 @@ func NewEntity(x, y int, class string, world *World) (*Entity, error) {
     e.World = world
     e.X = x
     e.Y = y
-
-    // Now, call the entity's action function with spawn = true so it can do anything it needs to do at spawn time...
-
-    act_function, ok := ActionMap[class]
-    if ok == false {
-        return nil, fmt.Errorf("NewEntity(): class '%s' is not in ActionMap\n", class)
-    }
-
-    if act_function != nil {
-        act_function(e, true)
-    }
 
     return e, nil
 }
@@ -75,7 +64,7 @@ func (e *Entity) Act() error {
         return nil
     }
 
-    fn(e, false)
+    fn(e)
 
     return nil
 }

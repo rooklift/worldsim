@@ -4,10 +4,7 @@ import (
     "math/rand"
 )
 
-func RandomWalk(e *Entity, spawn bool) {
-    if spawn {
-        return
-    }
+func RandomWalk(e *Entity) {
 
     direction := rand.Int31n(4)
 
