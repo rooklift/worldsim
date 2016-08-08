@@ -4,6 +4,8 @@ import (
     "math/rand"
 )
 
+// Note that it's not permitted to directly set .X and .Y
+
 func (e *Entity) RandomWalk() {
 
     direction := rand.Int31n(4)

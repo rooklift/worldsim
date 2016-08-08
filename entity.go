@@ -3,6 +3,7 @@ package main
 import (
     "fmt"
     "encoding/json"
+    "os"
 )
 
 type Entity struct {
@@ -16,7 +17,6 @@ type Entity struct {
     Hunger int          `json:"hunger"`
     Dead bool           `json:"dead"`
     Passable bool       `json:"passable"`
-    Doom bool           `json:"doom"`       // Being destroyed this turn?
 }
 
 var ActionMap map[string]func(e *Entity) = make(map[string]func(*Entity)) // function called at act time or spawn time
@@ -89,8 +89,7 @@ func (e *Entity) GetBlock() *Block {
 
 func (e *Entity) TryMove(desired_x int, desired_y int) bool {
 
-    // Adjust the entity's .X and .Y if to the requested values if possible. Do nothing else.
-    // In particular, note that this function should not fix block ownership of the entity.
+    old_x, old_y := e.X, e.Y
 
     w := e.World
 
@@ -113,6 +112,16 @@ func (e *Entity) TryMove(desired_x int, desired_y int) bool {
     e.X = desired_x
     e.Y = desired_y
 
+    err := w.DelinkCritter(old_x, old_y, e)
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "TryMove(): %v\n", err)
+    }
+
+    err = w.PlaceCritter(e)
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "TryMove(): %v\n", err)
+    }
+
     return true
 }
 
@@ -125,4 +134,12 @@ func (e *Entity) BecomeTile() error {
     }
     w.Blocks[e.X][e.Y].Tile = e
     return nil
+}
+
+func (e *Entity) Destroy() {
+
+    err := e.World.DelinkCritter(e.X, e.Y, e)
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Destroy(): %v\n", err)
+    }
 }

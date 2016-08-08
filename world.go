@@ -36,13 +36,6 @@ func NewWorld(width, height int) *World {
 
 func (w *World) Iterate() {
 
-    // For each critter:
-    //      - Call its Act() function, which may change its X, Y and Doom variables
-    //      - Delink it from its old block
-    //      - Link its new block to it
-    //
-    // TODO: it's not quite clear how one critter destroying another is going to work yet
-
     var err error
 
     for x := 0; x < w.Width; x++ {
@@ -66,25 +59,8 @@ func (w *World) Iterate() {
                     if err != nil {
                         fmt.Fprintf(os.Stderr, "Iterate(): %v\n", err)
                     }
+
                     critter.Acted = true
-
-                    // For various reasons, the critter might need to no longer be referenced by its block:
-
-                    if critter.X != x || critter.Y != y || critter.Doom {
-                        err = w.DelinkCritter(x, y, critter)
-                        if err != nil {
-                            fmt.Fprintf(os.Stderr, "Iterate(): %v\n", err)
-                        }
-
-                        // It may however need to be referenced by a different block:
-
-                        if critter.Doom == false {
-                            err = w.PlaceCritter(critter)
-                            if err != nil {
-                                fmt.Fprintf(os.Stderr, "Iterate(): %v\n", err)
-                            }
-                        }
-                    }
                 }
             }
         }

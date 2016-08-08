@@ -26,11 +26,11 @@ func init() {
 }
 
 func RatAct(e *Entity) {
-    
+
     e.RandomWalk()
 
     if rand.Float64() < 0.001 {
-        e.Doom = true
+        e.Destroy()
         LogChan <- "rat randomly died\n"
     }
 }
