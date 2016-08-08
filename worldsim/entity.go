@@ -13,7 +13,7 @@ type Entity struct {
 
     // It's important to bear in mind that, when an entity moves, not only does its own
     // .x and .y need to change, but the old and new owning blocks need updating. Therefore,
-    // never set .x and .y directly, but instead call methods like TryMove().
+    // programs can't set .x and .y directly, but instead must call methods like TryMove().
 
     Class string        `json:"class"`
     World *World        `json:"-"`          // ignored in json
