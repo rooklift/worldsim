@@ -249,9 +249,13 @@ func (w *World) CrittersInRect(centre_x int, centre_y int, dist int) []*Entity {
 
 func (w *World) CrittersNearCritter(e *Entity, dist int) []*Entity {
 
-    result_with_self := w.CrittersInRect(e.x, e.y, dist)
-
     var result []*Entity
+
+    if e == nil {
+        return result
+    }
+
+    result_with_self := w.CrittersInRect(e.x, e.y, dist)
 
     for _, ent := range result_with_self {
         if ent != e {

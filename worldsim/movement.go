@@ -45,6 +45,11 @@ func (e *Entity) TryMove(desired_x int, desired_y int) bool {
 
     block := e.World.Blocks[desired_x][desired_y]
 
+    if block.Tile == nil {  // No walking into the void. But nil tiles shouldn't exist really.
+        fmt.Fprintf(os.Stderr, "TryMove(): target coordinates had nil tile\n")
+        return false
+    }
+
     if block.Tile.Passable == false {
         return false
     }

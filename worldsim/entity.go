@@ -48,10 +48,16 @@ func NewEntity(x, y int, class string, world *World) (*Entity, error) {
 }
 
 func (e *Entity) X() int {
+    if e == nil {
+        return -1
+    }
     return e.x
 }
 
 func (e *Entity) Y() int {
+    if e == nil {
+        return -1
+    }
     return e.y
 }
 
@@ -97,10 +103,17 @@ func (e *Entity) Glyph() (rune, error) {
 }
 
 func (e *Entity) GetBlock() *Block {
+    if e == nil {
+        return nil
+    }
     return e.World.Blocks[e.x][e.y]
 }
 
 func (e *Entity) BecomeTile() error {
+
+    if e == nil {
+        return fmt.Errorf("BecomeTile() called with nil entity")
+    }
 
     w := e.World
 
@@ -113,7 +126,11 @@ func (e *Entity) BecomeTile() error {
 
 func (e *Entity) Destroy() {
 
-    // This is achieved simply by removing the entity from the slice of critters in the block
+    if e == nil {
+        fmt.Fprintf(os.Stderr, "Destroy() called with nil entity\n")
+    }
+
+    // "Destruction" is achieved simply by removing the entity from the slice of critters in the block
 
     err := e.World.DelinkCritter(e.x, e.y, e)
     if err != nil {
