@@ -16,6 +16,24 @@ type Block struct {
     Critters []*Entity
 }
 
+func NewWorld(width, height int) *World {
+
+    w := new(World)
+
+    w.Width = width
+    w.Height = height
+
+    for x := 0; x < w.Width; x++ {
+        var column []*Block
+        for y := 0; y < w.Height; y++ {
+            column = append(column, new(Block))
+        }
+        w.Blocks = append(w.Blocks, column)
+    }
+
+    return w
+}
+
 func (w *World) Iterate() {
 
     var err error
@@ -92,7 +110,7 @@ func (w *World) RemoveCritter(x, y int, e *Entity) error {
     for i, c := range w.Blocks[x][y].Critters {
         if c == e {
             w.Blocks[x][y].Critters = append(w.Blocks[x][y].Critters[:i], w.Blocks[x][y].Critters[i + 1:]...)
-            return nil
+            return nil      // One can only do the above trick once inside a range loop, which is all we need here
         }
     }
 
@@ -194,4 +212,55 @@ func (w *World) TryMove(e *Entity, desired_x int, desired_y int) bool {
     e.Y = desired_y
 
     return true
+}
+
+func (w *World) CrittersInRect(centre_x int, centre_y int, dist int) []*Entity {
+
+    var result []*Entity
+
+    if dist < 0 {
+        return result
+    }
+
+    start_x := centre_x - dist
+    start_y := centre_y - dist
+
+    end_x := centre_x + dist
+    end_y := centre_y + dist
+
+    if start_x < 0 {
+        start_x = 0
+    }
+    if start_x >= w.Width {
+        start_x = w.Width - 1
+    }
+    if start_y < 0 {
+        start_y = 0
+    }
+    if start_y >= w.Height {
+        start_y = w.Height - 1
+    }
+
+    for x := start_x; x <= end_x; x++ {
+        for y := start_y; y <= end_y; y++ {
+            result = append(result, w.Blocks[x][y].Critters...)
+        }
+    }
+
+    return result
+}
+
+func (w *World) CrittersNearCritter(e *Entity, dist int) []*Entity {
+
+    result_with_self := w.CrittersInRect(e.X, e.Y, dist)
+
+    var result []*Entity
+
+    for _, ent := range result_with_self {
+        if ent != e {
+            result = append(result, ent)
+        }
+    }
+
+    return result
 }
