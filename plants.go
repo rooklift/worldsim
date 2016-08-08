@@ -1,17 +1,21 @@
 package main
 
+import (
+    "./worldsim"
+)
+
 func init() {
 
-    ActionMap["grass"] = nil
-    DefaultMap["grass"] = Entity{
+    worldsim.ActionMap["grass"] = nil
+    worldsim.DefaultMap["grass"] = worldsim.Entity{
         Rune: ',',
         Mass: 0.2,
         Passable: true,
     }
 
 
-    ActionMap["tree"] = nil
-    DefaultMap["tree"] = Entity{
+    worldsim.ActionMap["tree"] = nil
+    worldsim.DefaultMap["tree"] = worldsim.Entity{
         Rune: 'O',
         Mass: 14000,
         Passable: false,

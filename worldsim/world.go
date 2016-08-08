@@ -1,7 +1,8 @@
-package main
+package worldsim
 
 import (
     "fmt"
+    "math/rand"
     "os"
 )
 
@@ -34,6 +35,19 @@ func NewWorld(width, height int) *World {
     return w
 }
 
+func (w *World) SprinkleTerrain(class string, chance float64) error {
+
+    for x := 0; x < w.Width; x++ {
+        for y := 0; y < w.Height; y++ {
+            if rand.Float64() < chance {
+                w.SetTileByClass(x, y, class)
+            }
+        }
+    }
+
+    return nil
+}
+
 func (w *World) Iterate() {
 
     var err error
@@ -51,8 +65,8 @@ func (w *World) Iterate() {
             for _, critter := range w.Blocks[x][y].Critters {
                 if critter.Acted == false {
 
-                    if x != critter.X || y != critter.Y {
-                        fmt.Fprintf(os.Stderr, "Iterate(): In block (%d,%d), found %s with .X == %d, .Y == %d\n", x, y, critter.Class, critter.X, critter.Y)
+                    if x != critter.x || y != critter.y {
+                        fmt.Fprintf(os.Stderr, "Iterate(): In block (%d,%d), found %s with .X == %d, .Y == %d\n", x, y, critter.Class, critter.x, critter.y)
                     }
 
                     err = critter.Act()
@@ -116,7 +130,7 @@ func (w *World) PlaceCritter(e *Entity) error {
 
     // Assumes the entity has its .X and .Y already validly set.
 
-    x, y := e.X, e.Y
+    x, y := e.x, e.y
 
     if w.InBounds(x, y) == false {
         return fmt.Errorf("PlaceCritter() called with out of bounds x, y == (%d,%d)", x, y)
@@ -125,6 +139,21 @@ func (w *World) PlaceCritter(e *Entity) error {
     // FIXME: check not already present
 
     w.Blocks[x][y].Critters = append(w.Blocks[x][y].Critters, e)
+
+    return nil
+}
+
+func (w *World) CreateCritterByClass(x int, y int, class string) error {
+
+    new_ent, err := NewEntity(x, y, class, w)
+    if err != nil {
+        return fmt.Errorf("CreateCritterByClass(): %v", err)
+    }
+
+    err = w.PlaceCritter(new_ent)
+    if err != nil {
+        return fmt.Errorf("CreateCritterByClass(): %v", err)
+    }
 
     return nil
 }
@@ -220,7 +249,7 @@ func (w *World) CrittersInRect(centre_x int, centre_y int, dist int) []*Entity {
 
 func (w *World) CrittersNearCritter(e *Entity, dist int) []*Entity {
 
-    result_with_self := w.CrittersInRect(e.X, e.Y, dist)
+    result_with_self := w.CrittersInRect(e.x, e.y, dist)
 
     var result []*Entity
 

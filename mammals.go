@@ -3,20 +3,22 @@ package main
 import (
     "fmt"
     "math/rand"
+
+    "./worldsim"
 )
 
 func init() {
 
-    ActionMap["rat"] = RatAct
-    DefaultMap["rat"] = Entity{
+    worldsim.ActionMap["rat"] = RatAct
+    worldsim.DefaultMap["rat"] = worldsim.Entity{
         Rune: 'r',
         Mass: 0.15,
         Dead: false,
         Passable: true,
     }
 
-    ActionMap["hare"] = HareAct
-    DefaultMap["hare"] = Entity{
+    worldsim.ActionMap["hare"] = HareAct
+    worldsim.DefaultMap["hare"] = worldsim.Entity{
         Rune: 'h',
         Mass: 1.5,
         Dead: false,
@@ -25,7 +27,7 @@ func init() {
 
 }
 
-func RatAct(e *Entity) {
+func RatAct(e *worldsim.Entity) {
 
     e.RandomWalk()
 
@@ -35,7 +37,7 @@ func RatAct(e *Entity) {
     }
 }
 
-func HareAct(e *Entity) {
+func HareAct(e *worldsim.Entity) {
 
     e.RandomWalk()
 
@@ -49,8 +51,8 @@ func HareAct(e *Entity) {
                 t.Mass = 0
             }
             if t.Mass == 0 {
-                e.World.SetTileByClass(e.X, e.Y, "dirt")
-                LogChan <- fmt.Sprintf("hare ate all the grass at (%d,%d)\n", e.X, e.Y)
+                e.World.SetTileByClass(e.X(), e.Y(), "dirt")
+                LogChan <- fmt.Sprintf("hare ate all the grass at (%d,%d)\n", e.X(), e.Y())
             }
         }
     }

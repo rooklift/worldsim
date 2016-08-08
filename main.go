@@ -5,6 +5,8 @@ import (
     "math/rand"
     "os"
     "time"
+
+    "./worldsim"
 )
 
 const (
@@ -18,9 +20,9 @@ func main() {
 
     go logger()
 
-    if len(DefaultMap) != len(ActionMap) {
-        fmt.Printf("len(DefaultMap): %d\n", len(DefaultMap))
-        fmt.Printf("len(ActionMap): %d\n", len(ActionMap))
+    if len(worldsim.DefaultMap) != len(worldsim.ActionMap) {
+        fmt.Printf("len(DefaultMap): %d\n", len(worldsim.DefaultMap))
+        fmt.Printf("len(ActionMap): %d\n", len(worldsim.ActionMap))
         return
     }
 
@@ -38,23 +40,23 @@ func main() {
     fmt.Println(w)
 }
 
-func world_gen() (*World, error) {
+func world_gen() (*worldsim.World, error) {
 
-    w := NewWorld(WIDTH, HEIGHT)
+    w := worldsim.NewWorld(WIDTH, HEIGHT)
 
     var err error
 
-    err = sprinkle_world(w, "dirt", 1.0)
+    err = w.SprinkleTerrain("dirt", 1.0)
     if err != nil {
         return w, fmt.Errorf("world_gen(): %v", err)
     }
 
-    err = sprinkle_world(w, "grass", 0.4)
+    err = w.SprinkleTerrain("grass", 0.4)
     if err != nil {
         return w, fmt.Errorf("world_gen(): %v", err)
     }
 
-    err = sprinkle_world(w, "tree", 0.05)
+    err = w.SprinkleTerrain("tree", 0.05)
     if err != nil {
         return w, fmt.Errorf("world_gen(): %v", err)
     }
@@ -65,34 +67,6 @@ func world_gen() (*World, error) {
     }
 
     return w, nil
-}
-
-func sprinkle_world(w *World, class string, chance float64) error {
-
-    for x := 0; x < w.Width; x++ {
-        for y := 0; y < w.Height; y++ {
-            if rand.Float64() < chance {
-                w.SetTileByClass(x, y, class)
-            }
-        }
-    }
-
-    return nil
-}
-
-func create_and_place_critter(x int, y int, class string, w *World) error {
-
-    new_ent, err := NewEntity(x, y, class, w)
-    if err != nil {
-        return fmt.Errorf("create_and_place_critter(): %v", err)
-    }
-
-    err = w.PlaceCritter(new_ent)
-    if err != nil {
-        return fmt.Errorf("create_and_place_critter(): %v", err)
-    }
-
-    return nil
 }
 
 func filtered_errors(errors []error) []error {
@@ -108,12 +82,12 @@ func filtered_errors(errors []error) []error {
     return result
 }
 
-func add_critters(w *World) error {
+func add_critters(w *worldsim.World) error {
 
     var errors []error
 
-    errors = append(errors, create_and_place_critter(2, 2, "hare", w))
-    errors = append(errors, create_and_place_critter(3, 3, "rat", w))
+    errors = append(errors, w.CreateCritterByClass(2, 2, "hare"))
+    errors = append(errors, w.CreateCritterByClass(3, 3, "rat"))
 
     errors = filtered_errors(errors)
 

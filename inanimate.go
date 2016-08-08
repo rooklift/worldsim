@@ -1,20 +1,24 @@
 package main
 
+import (
+    "./worldsim"
+)
+
 func init() {
-    ActionMap["dirt"] = nil
-    DefaultMap["dirt"] = Entity{
+    worldsim.ActionMap["dirt"] = nil
+    worldsim.DefaultMap["dirt"] = worldsim.Entity{
         Rune: ' ',
         Mass: 10,
         Dead: true,
         Passable: true,
     }
 
-    ActionMap["rock"] = nil
-    DefaultMap["rock"] = Entity{
+    worldsim.ActionMap["rock"] = nil
+    worldsim.DefaultMap["rock"] = worldsim.Entity{
         Rune: '*',
         Mass: 100,
         Dead: true,
         Passable: false,
     }
-    
+
 }
