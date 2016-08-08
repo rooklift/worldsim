@@ -4,7 +4,7 @@ import (
     "math/rand"
 )
 
-func RandomWalk(e *Entity) {
+func (e *Entity) RandomWalk() {
 
     direction := rand.Int31n(4)
 
@@ -21,7 +21,7 @@ func RandomWalk(e *Entity) {
         desired_y += 1
     }
 
-    e.World.TryMove(e, desired_x, desired_y)
+    e.TryMove(desired_x, desired_y)
 
     return
 }

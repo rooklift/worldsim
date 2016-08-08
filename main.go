@@ -16,6 +16,8 @@ func main() {
 
     rand.Seed(time.Now().UTC().UnixNano())
 
+    go logger()
+
     if len(DefaultMap) != len(ActionMap) {
         fmt.Printf("len(DefaultMap): %d\n", len(DefaultMap))
         fmt.Printf("len(ActionMap): %d\n", len(ActionMap))
@@ -26,6 +28,8 @@ func main() {
     if err != nil {
         fmt.Fprintf(os.Stderr, "%v\n", err)
     }
+
+    fmt.Println(w)
 
     for n := 0; n < 1000; n++ {
         w.Iterate()
@@ -68,13 +72,7 @@ func sprinkle_world(w *World, class string, chance float64) error {
     for x := 0; x < w.Width; x++ {
         for y := 0; y < w.Height; y++ {
             if rand.Float64() < chance {
-
-                new_entity, err := NewEntity(x, y, class, w)
-                if err != nil {
-                    return fmt.Errorf("sprinkle_world(): %v", err)
-                }
-
-                w.SetTile(x, y, new_entity)
+                w.SetTileByClass(x, y, class)
             }
         }
     }
@@ -114,8 +112,8 @@ func add_critters(w *World) error {
 
     var errors []error
 
-    errors = append(errors, create_and_place_critter(2, 2, "rat", w))
-    errors = append(errors, create_and_place_critter(3, 2, "rat", w))
+    errors = append(errors, create_and_place_critter(2, 2, "hare", w))
+    errors = append(errors, create_and_place_critter(3, 3, "rat", w))
 
     errors = filtered_errors(errors)
 

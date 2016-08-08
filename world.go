@@ -36,10 +36,14 @@ func NewWorld(width, height int) *World {
 
 func (w *World) Iterate() {
 
-    var err error
+    // For each critter:
+    //      - Call its Act() function, which may change its X, Y and Doom variables
+    //      - Delink it from its old block
+    //      - Link its new block to it
+    //
+    // TODO: it's not quite clear how one critter destroying another is going to work yet
 
-    // Call each critter's action function. The critter's function is responsible for changing its X and Y coordinates.
-    // But we then adjust what block owns it in this function here.
+    var err error
 
     for x := 0; x < w.Width; x++ {
         for y := 0; y < w.Height; y++ {
@@ -64,14 +68,21 @@ func (w *World) Iterate() {
                     }
                     critter.Acted = true
 
-                    if critter.X != x || critter.Y != y {
-                        err = w.RemoveCritter(x, y, critter)
+                    // For various reasons, the critter might need to no longer be referenced by its block:
+
+                    if critter.X != x || critter.Y != y || critter.Doom {
+                        err = w.DelinkCritter(x, y, critter)
                         if err != nil {
                             fmt.Fprintf(os.Stderr, "Iterate(): %v\n", err)
                         }
-                        err = w.PlaceCritter(critter)
-                        if err != nil {
-                            fmt.Fprintf(os.Stderr, "Iterate(): %v\n", err)
+
+                        // It may however need to be referenced by a different block:
+
+                        if critter.Doom == false {
+                            err = w.PlaceCritter(critter)
+                            if err != nil {
+                                fmt.Fprintf(os.Stderr, "Iterate(): %v\n", err)
+                            }
                         }
                     }
                 }
@@ -82,29 +93,37 @@ func (w *World) Iterate() {
 
 func (w *World) GetTile(x, y int) *Entity {
 
-    // Assumes uniform length of columns and rows, i.e. no raggedy 2D arrays
-
     if w.InBounds(x, y) == false {
         return nil
     }
     return w.Blocks[x][y].Tile
 }
 
-func (w *World) SetTile(x, y int, e *Entity) error {
-
-    // Assumes uniform length of columns and rows, i.e. no raggedy 2D arrays
+func (w *World) SetTileByClass(x, y int, class string) error {
 
     if w.InBounds(x, y) == false {
-        return fmt.Errorf("SetTile() called with out of bounds x, y == (%d,%d)", x, y)
+        return fmt.Errorf("SetTileByClass() called with out of bounds x, y == (%d,%d)", x, y)
     }
-    w.Blocks[x][y].Tile = e
+
+    new_entity, err := NewEntity(x, y, class, w)
+    if err != nil {
+        return fmt.Errorf("SetTileByClass(): %v", err)
+    }
+
+    err = new_entity.BecomeTile()
+    if err != nil {
+        return fmt.Errorf("SetTileByClass(): %v", err)
+    }
+
     return nil
 }
 
-func (w *World) RemoveCritter(x, y int, e *Entity) error {
+func (w *World) DelinkCritter(x, y int, e *Entity) error {
+
+    // Stop a block from pointing at a critter; i.e. useful if the critter has moved or been destroyed
 
     if w.InBounds(x, y) == false {
-        return fmt.Errorf("RemoveCritter() called with out of bounds x, y == (%d,%d)", x, y)
+        return fmt.Errorf("DelinkCritter() called with out of bounds x, y == (%d,%d)", x, y)
     }
 
     for i, c := range w.Blocks[x][y].Critters {
@@ -114,7 +133,7 @@ func (w *World) RemoveCritter(x, y int, e *Entity) error {
         }
     }
 
-    return fmt.Errorf("RemoveCritter() couldn't find the critter in block (%d,%d)", x, y)
+    return fmt.Errorf("DelinkCritter() couldn't find the critter in block (%d,%d)", x, y)
 }
 
 func (w *World) PlaceCritter(e *Entity) error {
@@ -168,7 +187,7 @@ func (w *World) String() string {
     // Now create a 1D slice that can be converted to a string
     // (not created with string += part for speed reasons)
 
-    var s []rune
+    var s []rune = []rune{'\n'}
 
     for y := 0; y < w.Height; y++ {
         for x := 0; x < w.Width; x++ {
@@ -185,33 +204,6 @@ func (w *World) InBounds(x, y int) bool {
         return true
     }
     return false
-}
-
-func (w *World) TryMove(e *Entity, desired_x int, desired_y int) bool {
-
-    // Adjust the entity's .X and .Y if to the requested values if possible. Do nothing else.
-    // In particular, note that this function should not fix block ownership of the entity.
-
-    if w.InBounds(desired_x, desired_y) == false {
-        return false
-    }
-
-    block := e.World.Blocks[desired_x][desired_y]
-
-    if block.Tile.Passable == false {
-        return false
-    }
-
-    for _, other_critter := range block.Critters {
-        if other_critter.Passable == false {
-            return false
-        }
-    }
-
-    e.X = desired_x
-    e.Y = desired_y
-
-    return true
 }
 
 func (w *World) CrittersInRect(centre_x int, centre_y int, dist int) []*Entity {
