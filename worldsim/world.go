@@ -7,29 +7,29 @@ import (
 )
 
 type World struct {
-    Width int
-    Height int
-    Blocks [][]*Block
+    width int
+    height int
+    blocks [][]*Block
 }
 
 type Block struct {
-    Tile *Entity
-    Critters []*Entity
+    tile *Entity
+    critters []*Entity
 }
 
 func NewWorld(width, height int) *World {
 
     w := new(World)
 
-    w.Width = width
-    w.Height = height
+    w.width = width
+    w.height = height
 
-    for x := 0; x < w.Width; x++ {
+    for x := 0; x < w.width; x++ {
         var column []*Block
-        for y := 0; y < w.Height; y++ {
+        for y := 0; y < w.height; y++ {
             column = append(column, new(Block))
         }
-        w.Blocks = append(w.Blocks, column)
+        w.blocks = append(w.blocks, column)
     }
 
     return w
@@ -37,9 +37,9 @@ func NewWorld(width, height int) *World {
 
 func (w *World) SprinkleTerrain(class string, chance float64) error {
 
-    for x := 0; x < w.Width; x++ {
-        for y := 0; y < w.Height; y++ {
-            if rand.Float64() < chance {
+    for x := 0; x < w.width; x++ {
+        for y := 0; y < w.height; y++ {
+            if chance == 1.0 || rand.Float64() < chance {
                 w.SetTileByClass(x, y, class)
             }
         }
@@ -52,17 +52,17 @@ func (w *World) Iterate() {
 
     var err error
 
-    for x := 0; x < w.Width; x++ {
-        for y := 0; y < w.Height; y++ {
-            for _, critter := range w.Blocks[x][y].Critters {
+    for x := 0; x < w.width; x++ {
+        for y := 0; y < w.height; y++ {
+            for _, critter := range w.blocks[x][y].critters {
                 critter.Acted = false
             }
         }
     }
 
-    for x := 0; x < w.Width; x++ {
-        for y := 0; y < w.Height; y++ {
-            for _, critter := range w.Blocks[x][y].Critters {
+    for x := 0; x < w.width; x++ {
+        for y := 0; y < w.height; y++ {
+            for _, critter := range w.blocks[x][y].critters {
                 if critter.Acted == false {
 
                     if x != critter.x || y != critter.y {
@@ -86,7 +86,7 @@ func (w *World) GetTile(x, y int) *Entity {
     if w.InBounds(x, y) == false {
         return nil
     }
-    return w.Blocks[x][y].Tile
+    return w.blocks[x][y].tile
 }
 
 func (w *World) SetTileByClass(x, y int, class string) error {
@@ -116,9 +116,9 @@ func (w *World) DelinkCritter(x, y int, e *Entity) error {
         return fmt.Errorf("DelinkCritter() called with out of bounds x, y == (%d,%d)", x, y)
     }
 
-    for i, c := range w.Blocks[x][y].Critters {
+    for i, c := range w.blocks[x][y].critters {
         if c == e {
-            w.Blocks[x][y].Critters = append(w.Blocks[x][y].Critters[:i], w.Blocks[x][y].Critters[i + 1:]...)
+            w.blocks[x][y].critters = append(w.blocks[x][y].critters[:i], w.blocks[x][y].critters[i + 1:]...)
             return nil      // One can only do the above trick once inside a range loop, which is all we need here
         }
     }
@@ -138,7 +138,7 @@ func (w *World) PlaceCritter(e *Entity) error {
 
     // FIXME: check not already present
 
-    w.Blocks[x][y].Critters = append(w.Blocks[x][y].Critters, e)
+    w.blocks[x][y].critters = append(w.blocks[x][y].critters, e)
 
     return nil
 }
@@ -166,19 +166,19 @@ func (w *World) String() string {
     var glyph rune
     var err error
 
-    for x := 0; x < w.Width; x++ {
+    for x := 0; x < w.width; x++ {
 
         var column []rune
 
-        for y := 0; y < w.Height; y++ {
+        for y := 0; y < w.height; y++ {
 
-            if len(w.Blocks[x][y].Critters) > 0 {
-                glyph, err = w.Blocks[x][y].Critters[0].Glyph()
+            if len(w.blocks[x][y].critters) > 0 {
+                glyph, err = w.blocks[x][y].critters[0].Glyph()
                 if err != nil {
                     fmt.Fprintf(os.Stderr, "While printing world critter: %v\n", err)
                 }
             } else {
-                glyph, err = w.Blocks[x][y].Tile.Glyph()
+                glyph, err = w.blocks[x][y].tile.Glyph()
                 if err != nil {
                     fmt.Fprintf(os.Stderr, "While printing world tile: %v\n", err)
                 }
@@ -194,8 +194,8 @@ func (w *World) String() string {
 
     var s []rune = []rune{'\n'}
 
-    for y := 0; y < w.Height; y++ {
-        for x := 0; x < w.Width; x++ {
+    for y := 0; y < w.height; y++ {
+        for x := 0; x < w.width; x++ {
             s = append(s, r[x][y])
         }
         s = append(s, '\n')
@@ -205,7 +205,7 @@ func (w *World) String() string {
 }
 
 func (w *World) InBounds(x, y int) bool {
-    if x >= 0 && x < w.Width && y >= 0 && y < w.Height {
+    if x >= 0 && x < w.width && y >= 0 && y < w.height {
         return true
     }
     return false
@@ -228,19 +228,19 @@ func (w *World) CrittersInRect(centre_x int, centre_y int, dist int) []*Entity {
     if start_x < 0 {
         start_x = 0
     }
-    if start_x >= w.Width {
-        start_x = w.Width - 1
+    if start_x >= w.width {
+        start_x = w.width - 1
     }
     if start_y < 0 {
         start_y = 0
     }
-    if start_y >= w.Height {
-        start_y = w.Height - 1
+    if start_y >= w.height {
+        start_y = w.height - 1
     }
 
     for x := start_x; x <= end_x; x++ {
         for y := start_y; y <= end_y; y++ {
-            result = append(result, w.Blocks[x][y].Critters...)
+            result = append(result, w.blocks[x][y].critters...)
         }
     }
 

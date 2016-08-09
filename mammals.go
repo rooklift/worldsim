@@ -41,8 +41,9 @@ func HareAct(e *worldsim.Entity) {
 
     e.RandomWalk()
 
-    b := e.GetBlock()
-    t := b.Tile
+    t := e.GetTile()
+
+    // We assume t != nil
 
     if t.Class == "grass" {
         if t.Mass > 0 && t.Dead == false {

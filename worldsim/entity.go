@@ -3,7 +3,6 @@ package worldsim
 import (
     "fmt"
     "encoding/json"
-    "os"
 )
 
 var ActionMap map[string]func(e *Entity) = make(map[string]func(*Entity))
@@ -15,10 +14,10 @@ type Entity struct {
     // .x and .y need to change, but the old and new owning blocks need updating. Therefore,
     // programs can't set .x and .y directly, but instead must call methods like TryMove().
 
-    Class string        `json:"class"`
+    x int
+    y int
     World *World        `json:"-"`          // ignored in json
-    x int               `json:"x"`
-    y int               `json:"y"`
+    Class string        `json:"class"`
     Acted bool          `json:"acted"`
     Rune rune           `json:"rune"`
     Mass float64        `json:"mass"`
@@ -62,10 +61,6 @@ func (e *Entity) Y() int {
 }
 
 func (e *Entity) String() string {
-    if e == nil {
-        return "nil"
-    }
-
     j, _ := json.MarshalIndent(e, "", "  ")
     return string(j)
 }
@@ -106,7 +101,22 @@ func (e *Entity) GetBlock() *Block {
     if e == nil {
         return nil
     }
-    return e.World.Blocks[e.x][e.y]
+
+    if e.World.InBounds(e.x, e.y) == false {
+        return nil
+    }
+
+    return e.World.blocks[e.x][e.y]
+}
+
+func (e *Entity) GetTile() *Entity {
+    block := e.GetBlock()
+
+    if block == nil {
+        return nil
+    }
+
+    return block.tile
 }
 
 func (e *Entity) BecomeTile() error {
@@ -120,20 +130,23 @@ func (e *Entity) BecomeTile() error {
     if w.InBounds(e.x, e.y) == false {
         return fmt.Errorf("BecomeTile() called with out of bounds entity; x, y == (%d,%d)", e.x, e.y)
     }
-    w.Blocks[e.x][e.y].Tile = e
+
+    w.blocks[e.x][e.y].tile = e
     return nil
 }
 
-func (e *Entity) Destroy() {
+func (e *Entity) Destroy() error {
 
     if e == nil {
-        fmt.Fprintf(os.Stderr, "Destroy() called with nil entity\n")
+        return fmt.Errorf("Destroy() called with nil entity\n")
     }
 
     // "Destruction" is achieved simply by removing the entity from the slice of critters in the block
 
     err := e.World.DelinkCritter(e.x, e.y, e)
     if err != nil {
-        fmt.Fprintf(os.Stderr, "Destroy(): %v\n", err)
+        return fmt.Errorf("Destroy(): %v\n", err)
     }
+
+    return nil
 }
